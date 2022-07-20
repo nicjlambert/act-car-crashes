@@ -1,5 +1,5 @@
 # From CRAN:
-install.packages("RSocrata")
+#install.packages("RSocrata")
 
 library(RSocrata)
 
@@ -21,3 +21,4 @@ if(!file.exists("../large-files/act_car_crash.rds")) {
 } else 
 print("File found. Loading...")
 df <- readRDS("../large-files/act_car_crash.rds")
+print("Done!")
