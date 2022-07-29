@@ -1,8 +1,33 @@
 # From CRAN:
-#install.packages(c("dplyr", "tidymodels"))
+#install.packages(c("dplyr", "tidymodels", "RSocrata"))
 
+library(RSocrata)
 library(dplyr)
 library(tidymodels)
+
+if(!file.exists("../large-files/act_car_crash.rds")) {
+
+ print("File not found. Downloading from 'https://www.data.act.gov.au' ...")
+
+   df <- 
+   RSocrata::read.socrata(
+   "https://www.data.act.gov.au/resource/6jn4-m8rx.json",
+   app_token = Sys.getenv("SOCRATA_API_TOKEN"),
+   email     = Sys.getenv("SOCRATA_API_EMAIL"),
+   password  = Sys.getenv("SOCRATA_API_PWD")
+   )
+
+   saveRDS(df, "../large-files/act_car_crash.rds")
+   print("Done!")
+
+} else 
+print("File found. Loading...")
+df <- readRDS("../large-files/act_car_crash.rds")
+print("Done!")
+
+
+
+
 
 #TODO model to predict crash severity?
 source("src_df.R")
@@ -49,7 +74,7 @@ class_preds <- lm_fit %>%
             type = 'class')
 
 
-class_preds  %>%
+class_preds %>%
   count(.pred_class) %>%
   mutate(prop = n / sum(n))
 
