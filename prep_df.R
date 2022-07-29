@@ -5,11 +5,12 @@ library(RSocrata)
 library(dplyr)
 library(tidymodels)
 
-if(!file.exists("../large-files/act_car_crash.rds")) {
+# source car crash data set
+if (!file.exists("../large-files/act_car_crash.rds")) {
 
  print("File not found. Downloading from 'https://www.data.act.gov.au' ...")
 
-   df <- 
+   df <-
    RSocrata::read.socrata(
    "https://www.data.act.gov.au/resource/6jn4-m8rx.json",
    app_token = Sys.getenv("SOCRATA_API_TOKEN"),
@@ -20,17 +21,13 @@ if(!file.exists("../large-files/act_car_crash.rds")) {
    saveRDS(df, "../large-files/act_car_crash.rds")
    print("Done!")
 
-} else 
+} else {
 print("File found. Loading...")
 df <- readRDS("../large-files/act_car_crash.rds")
 print("Done!")
-
-
-
-
+}
 
 #TODO model to predict crash severity?
-source("src_df.R")
 
 # inspect
 str(df)
@@ -39,9 +36,10 @@ str(df)
 df_clean <- df %>%
   as_tibble() %>%
   # target outcome
-  mutate(is_fatal_or_injury = as.factor(ifelse(crash_severity %in% c("Fatal", "Injury"), 1, 0)),
+  mutate(is_fatal_or_injury = as.factor(
+    ifelse(crash_severity %in% c("Fatal", "Injury"), 1, 0)),
          crash_date = as.Date(crash_date),
-         crash_hour = as.numeric(substr(crash_time,1,2))) %>%
+         crash_hour = as.numeric(substr(crash_time, 1, 2))) %>%
   mutate_if(is.character, as.factor) %>%
   select(-x, -y, -crash_severity, -crash_id, -crash_date, -crash_time, -location.latitude,
         -location.longitude, -location.human_address) %>%
@@ -63,15 +61,15 @@ df_train <- training(df_split)
 df_test <- testing(df_split)
 
 lm_model <- logistic_reg() %>%
-    set_engine('glm') %>%
-    set_mode('classification')
+    set_engine("glm") %>%
+    set_mode("classification")
 
 lm_fit <- lm_model %>%
     fit(is_fatal_or_injury ~ ., data = df_train)
 
 class_preds <- lm_fit %>%
     predict(new_data = df_test,
-            type = 'class')
+            type = "class")
 
 
 class_preds %>%
@@ -81,7 +79,7 @@ class_preds %>%
 
 prob_preds <- lm_fit %>%
     predict(new_data = df_test,
-            type = 'prob')
+            type = "prob")
 
 leads_results <- df_test %>%
     select(is_fatal_or_injury) %>%
@@ -90,5 +88,3 @@ leads_results <- df_test %>%
 conf_mat(leads_results,
 truth = is_fatal_or_injury,
 estimate = .pred_class)
-
-
