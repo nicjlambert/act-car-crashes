@@ -1,9 +1,10 @@
 # From CRAN:
-#install.packages(c("dplyr", "tidymodels", "RSocrata"))
+packages <- c(
+  "dplyr", "tidymodels", "RSocrata"
+  )
+#install.packages(packages)
 
-library(RSocrata)
-library(dplyr)
-library(tidymodels)
+library(packages)
 
 # source car crash data set
 if (!file.exists("../large-files/act_car_crash.rds")) {
@@ -41,8 +42,14 @@ df_clean <- df %>%
          crash_date = as.Date(crash_date),
          crash_hour = as.numeric(substr(crash_time, 1, 2))) %>%
   mutate_if(is.character, as.factor) %>%
-  select(-x, -y, -crash_severity, -crash_id, -crash_date, -crash_time, -location.latitude,
-        -location.longitude, -location.human_address) %>%
+  select(-x, -y,
+  -crash_severity,
+  -crash_id,
+  -crash_date,
+  -crash_time,
+  -location.latitude,
+  -location.longitude,
+  -location.human_address) %>%
   na.omit()
 
 str(df_clean)
@@ -52,9 +59,7 @@ df_clean  %>%
   mutate(prop = n / sum(n))
 
 # split the data into trainng (75%) and testing (25%)
-df_split <- initial_split(df_clean,
-                                 prop = 2/4,
-                                 strata = is_fatal_or_injury)
+df_split <- initial_split(df_clean, prop = 3 / 4, strata = is_fatal_or_injury)
 
 # extract training and testing sets
 df_train <- training(df_split)
