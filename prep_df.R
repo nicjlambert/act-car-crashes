@@ -50,9 +50,13 @@ df_clean <- df %>%
   mutate_if(is.character, as.factor) %>%
   select(
   -cyclist_casualties,
+ -reported_location,
   -crash_id,
   -crash_date,
   -crash_time,
+  -latitude,
+  -location_1.longitude,
+  -longitude,
   -location_1.latitude,
   -location_1.needs_recoding,
   -location_1.human_address) %>%
@@ -82,10 +86,12 @@ class_preds <- lm_fit %>%
     predict(new_data = df_test,
             type = "class")
 
+# predict classification
 class_preds %>%
   count(.pred_class) %>%
   mutate(prop = n / sum(n))
 
+# predict probabilities
 prob_preds <- lm_fit %>%
     predict(new_data = df_test,
             type = "prob")
@@ -94,6 +100,7 @@ leads_results <- df_test %>%
     select(is_fatal_or_injury) %>%
     bind_cols(class_preds, prob_preds)
 
-conf_mat(leads_results,
+# We can now arrange these values into the 2-class confusion matrix:
+yardstick::conf_mat(leads_results,
 truth = is_fatal_or_injury,
 estimate = .pred_class)
