@@ -15,45 +15,38 @@ install_missing_packages(packages)
 # Load packages
 lapply(packages, library, character.only = TRUE)
 
-df <- RSocrata::read.socrata(
+data <- RSocrata::read.socrata(
     "https://www.data.act.gov.au/resource/6jn4-m8rx.json",
     app_token = Sys.getenv("SOCRATA_TOKEN"),
     email     = Sys.getenv("SOCRATA_EMAIL"),
     password  = Sys.getenv("SOCRATA_PWD")
   )
 
-#TODO model to predict crash severity?
-
-# inspect
-str(df)
-
-# Read the dataset
-
-# Prepare the data
-# Remove unnecessary columns
-data <- df[, c("crash_type", "lighting_condition", "road_condition", "weather_condition", "crash_severity")]
-
-# Convert categorical variables to factors
+# Convert factors to categorical variables
+data$suburb_location <- as.factor(data$suburb_location)
+data$intersection <- as.factor(data$intersection)
+data$midblock <- as.factor(data$midblock)
+data$crash_direction <- as.factor(data$crash_direction)
 data$crash_type <- as.factor(data$crash_type)
 data$lighting_condition <- as.factor(data$lighting_condition)
 data$road_condition <- as.factor(data$road_condition)
 data$weather_condition <- as.factor(data$weather_condition)
 
-# Split the data into training and testing sets
-set.seed(123)  # For reproducibility
-train_index <- sample(nrow(data), 0.7 * nrow(data))  # 70% for training, adjust as desired
-train_data <- data[train_index, ]
-test_data <- data[-train_index, ]
+# Split the data into training and test sets
+set.seed(123)
+train_indices <- sample(1:nrow(data), nrow(data) * 0.7)
+train_data <- data[train_indices,]
+test_data <- data[-train_indices,]
 
-# Train the model
-model <- rpart(crash_severity ~ ., data = train_data, method = "class")
+# Create a decision tree model
+crash_tree <- rpart(crash_severity ~  intersection + crash_direction + crash_type + lighting_condition
+ + road_condition + weather_condition, data = train_data, method = "class")
 
-# Visualize the decision tree with a different color palette
-rpart.plot(model, box.palette = "Blues")
+# Plot the tree
+rpart.plot(crash_tree, extra = 1)
 
 # Make predictions on the test set
-predictions <- predict(model, newdata = test_data, type = "class")
+predictions <- predict(crash_tree, newdata = test_data, type = "class")
 
 # Evaluate the model
-accuracy <- sum(predictions == test_data$crash_severity) / nrow(test_data)
-print(paste("Accuracy:", accuracy))
+table(observed = test_data$crash_severity, predicted = predictions)
