@@ -2,5 +2,7 @@
 	"image": "mcr.microsoft.com/devcontainers/universal:2",
 	"features": {
 		"ghcr.io/rocker-org/devcontainer-features/r-apt:0": {}
-	}
+	},
+	"extensions": ["r", "r-languageserver"],
+	"postCreateCommand": ["install.packages('languageserver', repos='https://cloud.r-project.org/')"]
 }
