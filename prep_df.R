@@ -53,7 +53,7 @@ data <- RSocrata::read.socrata(
 # Create the map
 m <- leaflet(data) %>%
   addTiles() %>%
-  addCircleMarkers(~as.numeric(location.latitude), ~as.numeric(location.longitude), popup = ~as.character(crash_id))
+  addCircleMarkers(~as.numeric(location.longitude), ~as.numeric(location.latitude), popup = ~as.character(crash_id))
 
 # Display the map
 m
