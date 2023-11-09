@@ -13,16 +13,18 @@ response = requests.get(url)
 
 # Check if the request was successful
 if response.status_code == 200:
+
+    print(response.status_code)
     # Convert the JSON data into a DataFrame
     data = response.json()
     df = pd.DataFrame(data)
 
     # Selecting relevant columns for clustering (assuming these columns are present)
     # Here, we use 'latitude' and 'longitude'. Additional features can be included as needed.
-    if 'latitude' in df.columns and 'longitude' in df.columns:
+    if 'x' in df.columns and 'y' in df.columns:
         # Convert latitude and longitude to numeric
-        df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-        df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
+        df['latitude'] = pd.to_numeric(df['x'], errors='coerce')
+        df['longitude'] = pd.to_numeric(df['y'], errors='coerce')
 
         # Drop rows with missing values in these columns
         df.dropna(subset=['latitude', 'longitude'], inplace=True)
@@ -40,6 +42,7 @@ if response.status_code == 200:
 
         # Create a map centered around the mean latitude and longitude
         map_center = [df['latitude'].mean(), df['longitude'].mean()]
+        print(map_center)
         map = folium.Map(location=map_center, zoom_start=12)
 
         # Colors for different clusters
@@ -56,8 +59,10 @@ if response.status_code == 200:
             ).add_to(map)
 
         # Save the map to an HTML file
-        map.save('traffic_crash_clusters.html')
-        webbrowser.open('traffic_crash_clusters.html')
+        map.save('map.html')
+
+        # Open the HTML file in the default browser
+        webbrowser.open('map.html')
 
         result = "Map with traffic crash clusters created successfully."
     else:
@@ -66,4 +71,4 @@ if response.status_code == 200:
 else:
     result = "Failed to retrieve data. Status code: " + str(response.status_code)
 
-result
+print(result)
