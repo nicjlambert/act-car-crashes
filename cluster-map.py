@@ -23,8 +23,8 @@ if response.status_code == 200:
     # Here, we use 'latitude' and 'longitude'. Additional features can be included as needed.
     if 'x' in df.columns and 'y' in df.columns:
         # Convert latitude and longitude to numeric
-        df['latitude'] = pd.to_numeric(df['x'], errors='coerce')
-        df['longitude'] = pd.to_numeric(df['y'], errors='coerce')
+        df['latitude'] = pd.to_numeric(df['y'], errors='coerce')
+        df['longitude'] = pd.to_numeric(df['x'], errors='coerce')
 
         # Drop rows with missing values in these columns
         df.dropna(subset=['latitude', 'longitude'], inplace=True)
@@ -65,6 +65,7 @@ if response.status_code == 200:
         webbrowser.open('map.html')
 
         result = "Map with traffic crash clusters created successfully."
+        
     else:
         result = "Required columns 'latitude' and 'longitude' are not present in the dataset."
 
