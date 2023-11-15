@@ -3,54 +3,75 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import folium
-import webbrowser
+from folium.plugins import TimestampedGeoJson
 
+# Fetching and loading data
 url = 'https://www.data.act.gov.au/resource/6jn4-m8rx.json'
 response = requests.get(url)
 
-if response.status_code == 200:
-    data = response.json()
-    df = pd.DataFrame(data)
+if response.status_code != 200:
+    print("Failed to retrieve data. Status code:", response.status_code)
+    exit()
 
-    if 'x' in df.columns and 'y' in df.columns and 'crash_severity' in df.columns:
-        df['latitude'] = pd.to_numeric(df['y'], errors='coerce')
-        df['longitude'] = pd.to_numeric(df['x'], errors='coerce')
+data = response.json()
+df = pd.DataFrame(data)
 
-        # Encode 'crash_severity'
-        encoder = LabelEncoder()
-        df['crash_severity_encoded'] = encoder.fit_transform(df['crash_severity'])
+# Check for required columns
+if not {'x', 'y', 'crash_severity', 'crash_date'}.issubset(df.columns):
+    print("Required columns are not present in the dataset.")
+    exit()
 
-        df.dropna(subset=['latitude', 'longitude', 'crash_severity_encoded'], inplace=True)
+# Processing data
+df['latitude'] = pd.to_numeric(df['y'], errors='coerce')
+df['longitude'] = pd.to_numeric(df['x'], errors='coerce')
+df['crash_date'] = pd.to_datetime(df['crash_date'], errors='coerce')
 
-        # Standardize the data
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(df[['latitude', 'longitude', 'crash_severity_encoded']])
+encoder = LabelEncoder()
+df['crash_severity_encoded'] = encoder.fit_transform(df['crash_severity'])
 
-        kmeans = KMeans(n_clusters=3, random_state=0)
-        kmeans.fit(scaled_features)
+df.dropna(subset=['latitude', 'longitude', 'crash_severity_encoded'], inplace=True)
 
-        df['cluster'] = kmeans.labels_
+# Standardize the data
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(df[['latitude', 'longitude', 'crash_severity_encoded']])
 
-        map_center = [df['latitude'].mean(), df['longitude'].mean()]
-        map = folium.Map(location=map_center, zoom_start=12)
-        colors = ['red', 'green', 'blue']
+# Apply KMeans clustering
+kmeans = KMeans(n_clusters=3, random_state=0)
+kmeans.fit(scaled_features)
+df['cluster'] = kmeans.labels_
 
-        for idx, row in df.iterrows():
-            folium.CircleMarker(
-                location=[row['latitude'], row['longitude']],
-                radius=5,
-                color=colors[row['cluster']],
-                fill=True,
-                fill_color=colors[row['cluster']]
-            ).add_to(map)
+# Preparing data for TimestampedGeoJson
+features = []
+for _, row in df.iterrows():
+    feature = {
+        'type': 'Feature',
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [row['longitude'], row['latitude']],
+        },
+        'properties': {
+            'time': row['crash_date'].date().__str__(),
+            'style': {'color': ''},
+            'icon': 'circle',
+            'iconstyle': {
+                'fillColor': ['red', 'green', 'blue'][row['cluster']],
+                'fillOpacity': 0.8,
+                'stroke': 'true',
+                'radius': 5
+            }
+        }
+    }
+    features.append(feature)
 
-        map.save('map.html')
-        result = "Map with traffic crash clusters created successfully."
-        
-    else:
-        result = "Required columns are not present in the dataset."
+# Creating a map
+map_center = [df['latitude'].mean(), df['longitude'].mean()]
+main_map = folium.Map(location=map_center, zoom_start=12)
 
-else:
-    result = "Failed to retrieve data. Status code: " + str(response.status_code)
+# Adding the Timestamped GeoJSON plugin
+TimestampedGeoJson({
+    'type': 'FeatureCollection',
+    'features': features,
+}, period='P1D', add_last_point=True).add_to(main_map)
 
-print(result)
+main_map.save('map_with_time_slider.html')
+print("Map with traffic crash clusters created successfully.")
