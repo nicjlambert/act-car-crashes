@@ -40,7 +40,7 @@ df['cluster'] = kmeans.labels_
 
 # Creating a map
 map_center = [df['latitude'].mean(), df['longitude'].mean()]
-main_map = folium.Map(location=map_center, zoom_start=12)
+main_map = folium.Map(location=map_center, tiles="cartodbpositron", zoom_start=12)
 
 # Adding cluster markers to the map
 for _, row in df.iterrows():
@@ -49,7 +49,8 @@ for _, row in df.iterrows():
         radius=5,
         color=['red', 'green', 'blue'][row['cluster']],
         fill=True,
-        fill_opacity=0.8
+        fill_opacity=0.8,
+         tooltip=f"Crash Severity: {row['cluster']}"  # Tooltip added here
     ).add_to(main_map)
 
 main_map.save('map_with_clusters.html')
