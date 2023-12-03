@@ -17,7 +17,7 @@ data = response.json()
 df = pd.DataFrame(data)
 
 # Check for required columns
-required_columns = {'crash_severity', 'weather_condition', 'road_condition', 'lighting_condition', 'x', 'y'}
+required_columns = {'crash_severity', 'weather_condition', 'road_condition', 'lighting_condition','x', 'y', 'crash_time'}
 if not required_columns.issubset(df.columns):
     print("Required columns are not present in the dataset.")
     exit()
@@ -27,9 +27,10 @@ encoder = LabelEncoder()
 df['weather_condition_encoded'] = encoder.fit_transform(df['weather_condition'])
 df['road_condition_encoded'] = encoder.fit_transform(df['road_condition'])
 df['lighting_condition_encoded'] = encoder.fit_transform(df['lighting_condition'])
+df['crash_time_encoded'] = encoder.fit_transform(df['crash_time'])
 
 df['crash_severity_encoded'] = encoder.fit_transform(df['crash_severity'])
-features = df[['weather_condition_encoded', 'road_condition_encoded', 'lighting_condition_encoded', 'x', 'y']]
+features = df[['weather_condition_encoded', 'road_condition_encoded', 'lighting_condition_encoded','x', 'y', 'crash_time_encoded']]
 target = df['crash_severity_encoded']
 
 # Splitting data into training and testing sets
@@ -60,5 +61,5 @@ print("Classification Report:\n", classification_report(y_test, predictions))
 predicted_injuries = model.predict(X_test_scaled)
 
 # Add predictions to your test dataset for analysis
-df_test = pd.DataFrame(X_test_scaled, columns=['weather_condition', 'road_condition', 'lighting_condition', 'x', 'y'])
+df_test = pd.DataFrame(X_test_scaled, columns=['weather_condition', 'road_condition', 'lighting_condition','x', 'y', 'crash_time'])
 df_test['predicted_injury'] = predicted_injuries

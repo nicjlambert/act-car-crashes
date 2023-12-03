@@ -28,8 +28,8 @@ encoder = LabelEncoder()
 df['weather_condition_encoded'] = encoder.fit_transform(df['weather_condition'])
 df['road_condition_encoded'] = encoder.fit_transform(df['road_condition'])
 df['lighting_condition_encoded'] = encoder.fit_transform(df['lighting_condition'])
-
 df['crash_severity_encoded'] = encoder.fit_transform(df['crash_severity'])
+
 features = df[['weather_condition_encoded', 'road_condition_encoded', 'lighting_condition_encoded', 'x', 'y']]
 target = df['crash_severity_encoded']
 
@@ -43,6 +43,7 @@ X_test_scaled = scaler.transform(X_test)
 
 # Number of unique labels in target
 num_classes = len(target.unique())
+print(num_classes)
 
 # Building the Shallow Neural Network
 model = Sequential()
@@ -76,8 +77,8 @@ new_data = {
     'weather_condition': ['Sunny', 'Rainy'],
     'road_condition': ['Dry', 'Wet'],
     'lighting_condition': ['Daylight', 'Dark'],
-    'x': [100, 200],
-    'y': [150, 250]
+    'x': [149.094072, 200],
+    'y': [-35.2013155, 250]
 }
 new_df = pd.DataFrame(new_data)
 
