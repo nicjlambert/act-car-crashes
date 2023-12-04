@@ -15,31 +15,7 @@ if response.status_code != 200:
     exit()
 
 data = response.json()
-df = pd.DataFrame(data)
-
-# Convert the DataFrame to a GeoJSON format
-#def df_to_geojson(df, properties, lat='y', lon='x'):
-#    geojson = {'type':'FeatureCollection', 'features':[]}
-#    for _, row in df.iterrows():
-#        if pd.notnull(row[lat]) and pd.notnull(row[lon]):
-#            feature = {'type':'Feature',
-#                       'properties':{},
-#                       'geometry':{'type':'Point',
-#                                   'coordinates':[]}}
-#            # Convert coordinates to float
-#            feature['geometry']['coordinates'] = [float(row[lon]), float(row[lat])]
-#            for prop in properties:
-#                feature['properties'][prop] = row[prop]
-#            geojson['features'].append(feature)
-#    return geojson
-## Columns you want to include in the properties
-#properties = ['crash_id', 'crash_date', 'crash_time', 'suburb_location', 'crash_severity']
-#
-## Generate GeoJSON
-#geojson_data = df_to_geojson(df, properties)
-
-# Check if GeoJSON is created properly
-#print(json.dumps(geojson_data, indent=2)[:500])  # Print first 500 characters for checking
+#df = pd.DataFrame(data)
 
 # Access Mapbox Access Token from environment variable
 mapbox_access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
@@ -48,28 +24,28 @@ mapbox_access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
 if mapbox_access_token is None:
     raise ValueError("Mapbox access token not found in environment variables.")
 
-# Create a geojson Feature Collection export from a Pandas dataframe
-points = df_to_geojson(df, 
-                       properties=['crash_id', 'crash_date', 'crash_time', 'suburb_location', 'crash_severity'],
-                       lat='x', lon='y', precision=3)
+# Convert data to GeoJSON
+features = []
+for item in data:
+    point = geojson.Point((float(item["location"]["longitude"]), float(item["location"]["latitude"])))
+    properties = {key: item[key] for key in item if key != 'location'}
+    features.append(geojson.Feature(geometry=point, properties=properties))
 
-#Create a clustered circle map
-color_stops = create_color_stops([1,10,50,100], colors='BrBG')
+geojson_data = geojson.FeatureCollection(features)
 
-viz = ClusteredCircleViz(points,
-                         access_token=mapbox_access_token,
-                         color_stops=color_stops,
-                         radius_stops=[[1,5], [10, 10], [50, 15], [100, 20]],
-                         radius_default=2,
-                         cluster_maxzoom=10,
-                         cluster_radius=30,
-                         label_size=12,
-                         opacity=0.9,
-                         center=(-95, 40),
-                         zoom=3)
+# Define color stops based on crash severity
+color_stops = create_color_stops(['Injury', 'Property Damage Only'], colors=['green', 'orange'])
+
+# Create the visualization
+viz = CircleViz(geojson_data,
+                access_token=mapbox_access_token,
+                style='mapbox://styles/mapbox/light-v10',
+                center=(149.0550561, -35.39200665),
+                zoom=12,
+                #color_property='crash_severity',  # the property to use for coloring
+                #color_stops=color_stops,  # the color stops
+                radius=5  # size of the circles
+                )
 
 # Show the map
 viz.show()
-#viz.create_html('temp_map.html')  # Save the map to an HTML file
-#IFrame('temp_map.html', width=700, height=500)  # Adjust size as needed
-
