@@ -1,12 +1,11 @@
 import os
+import json
 import numpy as np
 import pandas as pd
 import json
 from mapboxgl.viz import ClusteredCircleViz
 from mapboxgl.utils import *
 import requests
-from IPython.display import IFrame
-import mapclassify
 
 # Further info:
 #   https://github.com/mapbox/mapboxgl-jupyter
@@ -32,6 +31,11 @@ df = df.merge(crash_counts, on='suburb_location', how='left')
 high_risk_threshold = df['crash_count'].quantile(0.75) # Or any other statistical measure
 df['risk_level'] = np.where(df['crash_count'] >= high_risk_threshold, 'High', 'Normal')
 
+# Convert the DataFrame to a JSON string
+json_data = df.to_json(orient='records')
+
+# Parse the JSON string back into a list of dictionaries, which resembles the parsed JSON data
+data = json.loads(json_data)
 
 # Access Mapbox Access Token from environment variable
 mapbox_access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
