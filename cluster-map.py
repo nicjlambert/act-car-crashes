@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import json
 from mapboxgl.viz import ClusteredCircleViz
@@ -20,6 +21,17 @@ if response.status_code != 200:
 
 data = response.json()
 df = pd.DataFrame(data)
+
+# Group by 'suburb_location' and create a new DataFrame with crash counts
+crash_counts = df.groupby('suburb_location').size().reset_index(name='crash_count')
+
+# Merge this back into the original DataFrame
+df = df.merge(crash_counts, on='suburb_location', how='left')
+
+# Now you have the 'crash_count' column in df and can create the 'risk_level' column
+high_risk_threshold = df['crash_count'].quantile(0.75) # Or any other statistical measure
+df['risk_level'] = np.where(df['crash_count'] >= high_risk_threshold, 'High', 'Normal')
+
 
 # Access Mapbox Access Token from environment variable
 mapbox_access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
