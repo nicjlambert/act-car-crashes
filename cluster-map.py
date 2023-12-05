@@ -5,6 +5,10 @@ from mapboxgl.viz import CircleViz
 from mapboxgl.utils import *
 import requests
 from IPython.display import IFrame
+import mapclassify
+
+# Further info:
+#   https://github.com/mapbox/mapboxgl-jupyter
 
 # Fetching and loading data
 url = 'https://www.data.act.gov.au/resource/6jn4-m8rx.json'
@@ -15,7 +19,7 @@ if response.status_code != 200:
     exit()
 
 data = response.json()
-#df = pd.DataFrame(data)
+df = pd.DataFrame(data)
 
 # Access Mapbox Access Token from environment variable
 mapbox_access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
@@ -33,18 +37,21 @@ for item in data:
 
 geojson_data = geojson.FeatureCollection(features)
 
-# Define color stops based on crash severity
-color_stops = create_color_stops(['Injury', 'Property Damage Only'], colors=['green', 'orange'])
+# Assign color stops
+category_color_stops = [['Injury', 'rgb(211,47,47)'],  
+                        ['Property Damage Only', 'rgb(81,45,168)']]
 
 # Create the visualization
 viz = CircleViz(geojson_data,
                 access_token=mapbox_access_token,
-                style='mapbox://styles/mapbox/light-v10',
-                center=(149.0550561, -35.39200665),
+                style='mapbox://styles/mapbox/streets-v8',
+                center=(149.06, -35.39),
                 zoom=12,
-                #color_property='crash_severity',  # the property to use for coloring
-                #color_stops=color_stops,  # the color stops
-                radius=5  # size of the circles
+                color_property='crash_severity',
+                color_default='blue',
+                color_function_type='match',
+                color_stops=category_color_stops,
+                radius=2  # size of the circles
                 )
 
 # Show the map
