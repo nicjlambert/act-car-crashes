@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import json
-from mapboxgl.viz import CircleViz
+from mapboxgl.viz import ClusteredCircleViz
 from mapboxgl.utils import *
 import requests
 from IPython.display import IFrame
@@ -38,21 +38,21 @@ for item in data:
 geojson_data = geojson.FeatureCollection(features)
 
 # Assign color stops
-category_color_stops = [['Injury', 'rgb(211,47,47)'],  
-                        ['Property Damage Only', 'rgb(81,45,168)']]
+color_stops = create_color_stops([1,10,50,100], colors='BrBG')
 
 # Create the visualization
-viz = CircleViz(geojson_data,
+viz = ClusteredCircleViz(geojson_data,
                 access_token=mapbox_access_token,
-                style='mapbox://styles/mapbox/streets-v8',
-                center=(149.06, -35.39),
-                zoom=12,
-                color_property='crash_severity',
-                color_default='blue',
-                color_function_type='match',
-                color_stops=category_color_stops,
-                radius=2  # size of the circles
+                style='mapbox://styles/mapbox/light-v10',
+                center=(149, -35.30),
+                color_stops = color_stops,
+                radius_stops = [[1,5], [10, 10], [50, 15], [100, 20]],
+                cluster_maxzoom = 10,
+                cluster_radius = 25,
+                opacity = 0.9,
+                zoom = 10
                 )
 
+viz.scale = True
 # Show the map
 viz.show()
